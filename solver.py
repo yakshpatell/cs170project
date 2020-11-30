@@ -17,15 +17,30 @@ def solve(G, s):
     maxHappinessPerK = [0 for i in range(numOfStudents+1)]
 
     edges = G.edges(data=True)
-    sortedEdges = sorted(edges, key = lambda tuple: tuple[2].get('happiness', 1), reverse = True)
+    sortedEdges = sorted(edges, key = lambda tuple: tuple[2].get['happiness'], reverse = True)
     
     for i in range(1, len(maxHappinessPerK)):
-        # assign 
+        ''' 
+            calculate Sgroup depending on current k iteration 
+            for each k:
+                currentHappiness = 0
+                while k is not reached and Sgroup is not reached:
+                    make new group
+                    using the decreasing sort, enumerate group until Sgroup is reached
+                maxHappinessPerK[k] = currentHappiness
+            
+            return max()
+        '''
+        pass
+                
+
+                
+            
+            
+                
+
 
     
-
-
-
     pass
 
 
