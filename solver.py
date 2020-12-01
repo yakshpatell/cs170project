@@ -19,29 +19,37 @@ def solve(G, s):
     edges = G.edges(data=True)
     sortedEdges = sorted(edges, key = lambda tuple: tuple[2].get['happiness'], reverse = True)
     
+    ''' Yaksh's Pseudo Code '''
+    # keep track of groups -> currentGroups = [Group Object1, Group Object2]
+    # GroupObject will be a class with attributes -> set of members, happiness, stress 
+    # GroupObject will have methods to calculate happiness, group stress if potential pair wants to be added
+
+
+
     for i in range(1, len(maxHappinessPerK)):
-        ''' 
-            calculate Sgroup depending on current k iteration 
-            for each k:
-                currentHappiness = 0
-                while k is not reached and Sgroup is not reached:
-                    make new group
-                    using the decreasing sort, enumerate group until Sgroup is reached
-                maxHappinessPerK[k] = currentHappiness
-            
-            return max()
-        '''
-        pass
-                
+        # i is our current k value
+        C = G.copy()
+        currentHappiness = 0
+        maxGroupStress = s / i
 
-                
-            
-            
-                
+        while numOfGroups <= i:
+            mostHappyPair = sortedEdges[0]
 
+            # now we will check to add mostHappyPair or not
+            newHappinessAmount = getHappinessAmount()
+            groupStressWithPair = getGroupStress()
 
-    
-    pass
+            if groupStressWithPair <= maxGroupStress:
+                C.addEdge(mostHappyPair)
+                currentHappiness += newHappinessAmount
+            else:
+                # To Do: create new group with that added edge 
+                numOfGroups += 1
+
+        maxHappinessPerK[i] = currentHappiness
+
+    # BIG To Do: Also need to somehow keep track group current assignments per k, so we can return that 
+    return max(maxHappinessPerK)
 
 
 def dp_hauffman_solve(G, s):
