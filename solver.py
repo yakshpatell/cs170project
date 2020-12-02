@@ -34,6 +34,8 @@ def solve(G, s):
         maxGroupStress = s / i
 
         while numOfGroups <= i:
+            # format of sortedEdges[0] = {}
+
             mostHappyPair = sortedEdges[0]
 
             # determine whether to add mostHappyPair here
