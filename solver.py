@@ -3,6 +3,8 @@ from parse import read_input_file, write_output_file
 from utils import is_valid_solution, calculate_happiness
 import sys
 
+if __name__ = "__main__":
+    main()
 
 def solve(G, s):
     """
@@ -14,34 +16,48 @@ def solve(G, s):
         k: Number of breakout rooms
     """
     numOfStudents = len(G)
-    maxHappinessPerK = [0 for i in range(numOfStudents+1)]
+    bestGroupSoFar = None
 
     edges = G.edges(data=True)
     sortedEdges = sorted(edges, key = lambda tuple: tuple[2].get['happiness'], reverse = True)
     
+    ''' Yaksh's Pseudo Code '''
+    # keep track of groups -> currentGroups = [Group Object1, Group Object2]
+    # GroupObject will be a class with attributes -> set of members, happiness, stress 
+    # GroupObject will have methods to calculate happiness, group stress if potential pair wants to be added
+
     for i in range(1, len(maxHappinessPerK)):
-        ''' 
-            calculate Sgroup depending on current k iteration 
-            for each k:
-                currentHappiness = 0
-                while k is not reached and Sgroup is not reached:
-                    make new group
-                    using the decreasing sort, enumerate group until Sgroup is reached
-                maxHappinessPerK[k] = currentHappiness
-            
-            return max()
-        '''
-        pass
+        # i is our current k value
+        C = G.copy()
+        C.clear
+        currentHappiness = 0
+        maxGroupStress = s / i
+
+        while numOfGroups <= i:
+            mostHappyPair = sortedEdges[0]
+
+            # determine whether to add mostHappyPair here
+            newHappinessAmount = getHappinessAmount()
+            groupStressWithPair = getGroupStress()
+
+            if groupStressWithPair <= maxGroupStress:
+                C.addEdge(mostHappyPair)
+                currentHappiness += newHappinessAmount
+            else:
+                # To Do: create new group with that added edge 
+                numOfGroups += 1
+
+        maxHappinessPerK[i] = currentHappiness
+
+    # BIG To Do: Also need to somehow keep track group current assignments per k, so we can return that 
+    return max(maxHappinessPerK)
                 
 
                 
             
-            
-                
-
-
     
-    pass
+def getHappinessAmount():
+
 
 
 def dp_hauffman_solve(G, s):
@@ -65,11 +81,6 @@ def main():
     assert is_valid_solution(D, G, s, k)
     print("Total Happiness: {}".format(calculate_happiness(D, G)))
     write_output_file(D, 'out/test.out')
-
-if __name__ = "__main__":
-    main()
-
-
 
 # Here's an example of how to run your solver.
 
