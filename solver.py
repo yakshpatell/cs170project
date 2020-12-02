@@ -1,10 +1,17 @@
 import networkx as nx
 from parse import read_input_file, write_output_file
-from utils import is_valid_solution, calculate_happiness
+from utils import is_valid_solution, calculate_happiness, convert_dictionary, calculate_stress_for_room, calculate_happiness_for_room
 import sys
 
 if __name__ = "__main__":
     main()
+
+def convertPairGroupToMap(groupAssignments):
+    result = {}
+    for i in range(len(groupAssignments)):
+        result[i] = groupAssignments[i]
+    groupAssignments = convert_dictionary(result)
+    return groupAssignments
 
 def solve(G, s):
     """
@@ -16,49 +23,70 @@ def solve(G, s):
         k: Number of breakout rooms
     """
     numOfStudents = len(G)
-    bestGroupSoFar = None
+    bestAssignment = None
+    bestHappiness = 0
+    sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['happiness'], reverse = True)
 
-    edges = G.edges(data=True)
-    sortedEdges = sorted(edges, key = lambda tuple: tuple[2].get['happiness'], reverse = True)
-    
-    ''' Yaksh's Pseudo Code '''
-    # keep track of groups -> currentGroups = [Group Object1, Group Object2]
-    # GroupObject will be a class with attributes -> set of members, happiness, stress 
-    # GroupObject will have methods to calculate happiness, group stress if potential pair wants to be added
-
-    for i in range(1, len(maxHappinessPerK)):
+    for i in range(1, numOfStudents+1):
         # i is our current k value
+        groupAssignments = []
+
         C = G.copy()
-        C.clear
-        currentHappiness = 0
+        C.clear()
+        currentKHappiness = 0
         maxGroupStress = s / i
 
-        while numOfGroups <= i:
-            # format of sortedEdges[0] = {}
+        while len(groupAssignments) <= i:
+            mostHappyPair = sortedEdges.pop(0) # (u,v,{happiness: 3, stress: 3})
+            
+            student1 = mostHappyPair[0]
+            student2 = mostHappyPair[1]
 
-            mostHappyPair = sortedEdges[0]
+            mostHappyPairGroup = None # this will be a set of students
+            isStudent1Assigned = False
+            isStudent2Assigned = False
 
-            # determine whether to add mostHappyPair here
-            newHappinessAmount = getHappinessAmount()
-            groupStressWithPair = getGroupStress()
-
-            if groupStressWithPair <= maxGroupStress:
-                C.addEdge(mostHappyPair)
-                currentHappiness += newHappinessAmount
-            else:
-                # To Do: create new group with that added edge 
-                numOfGroups += 1
-
-        maxHappinessPerK[i] = currentHappiness
-
-    # BIG To Do: Also need to somehow keep track group current assignments per k, so we can return that 
-    return max(maxHappinessPerK)
-                
-
+            for i in range(len(groupAssignments)):
+                if student1 in groupAssignments[i]:
+                    isStudent1Assigned = True
+                    if mostHappyPairGroup == None:
+                        mostHappyPairGroup = groupAssignments[i]
+                elif student2 in groupAssignments[i]:
+                    isStudent2Assigned = True
+                    if mostHappyPairGroup == None:
+                        mostHappyPairGroup = groupAssignments[i]
                 
             
-    
-def getHappinessAmount():
+            if isStudent1Assigned and isStudent2Assigned:
+                continue
+            
+            if mostHappyPairGroup == None or len(mostHappyPairGroup) == 0:
+                groupAssignments.append(set(student1, student2))
+                mostHappyPairGroup = set(student1, student2)
+            
+            # only adding the edge before stress check so that we can use provided util methods. we will remove if exceeds stress. 
+            for vertex in mostHappyPairGroup:
+                C.add_edge(student1, vertex)
+                C.add_edge(student2, vertex)
+            
+            roomStress = calculate_stress_for_room(mostHappyPairGroup, C)
+
+            #calculate happiness
+            if roomStress <= maxGroupStress:
+                roomHappiness = calculate_happiness_for_room(mostHappyPairGroup, C)
+
+            else:
+                # To Do: create new group with that added edge 
+                for vertex in mostHappyPairGroup:
+                    C.remove_edge(student1, vertex)
+                    C.remove_edge(student2, vertex)
+
+        if currentKHappiness > bestHappiness:
+            bestAssignment = groupAssignments
+            bestHappiness = currentKHappiness
+
+    # format they want it in 
+    return convertPairGroupToMap()
 
 
 
