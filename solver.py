@@ -6,11 +6,23 @@ import sys
 if __name__ = "__main__":
     main()
 
-def convertPairGroupToMap(groupAssignments):
+def convertListIntoMap(groupAssignments):
     pairMap = {}
+    numOfGroups = 0
     for i in range(len(groupAssignments)):
-        pairMap[i] = groupAssignments[i]
-    return pairMap
+    	for student in groupAssignments[i]:
+    		pairMap[student] = i
+    	numOfGroups += 1
+    return pairMap, numOfGroups
+
+def passesStressCheck(G, maxGroupStress, studentGroup, nonPairedStudent):
+	studentGroupCopy = studentGroup
+	roomStress = calculate_stress_for_room(list(studentGroupCopy.add(nonPairedStudent)), G)
+	return roomStress <= maxGroupStress
+
+def passesStressCheck(G, maxGroupStress, student1, student2):
+	roomStress = calculate_stress_for_room([student1, student2], G)
+	return roomStress <= maxGroupStress
 
 def solve(G, s):
     """
@@ -21,53 +33,61 @@ def solve(G, s):
         D: Dictionary mapping for student to breakout room r e.g. {0:2, 1:0, 2:1, 3:2}
         k: Number of breakout rooms
     """
-    numOfStudents = len(G)
-    bestAssignment = None
-    bestHappiness = 0
     sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['happiness'], reverse = True)
+    bestAssignment = None
+    bestAssignmentHappiness = 0
+    optimalK = 0
 
-    for i in range(1, numOfStudents+1):
-        groupAssignments = []
+    for i in range(1, len(G) + 1):
+        groupAssignments = [] # list of student sets
+        createdGroups = 0
         maxGroupStress = s / i
-        while len(groupAssignments) <= i:
-            mostHappyPair = sortedEdges.pop(0) # (u,v,{happiness: 3, stress: 3})
+
+        while createdGroups <= i:
+            mostHappyPair = sortedEdges.pop(0) # format: (u, v, {happiness: 3, stress: 3})
             
             student1 = mostHappyPair[0]
             student2 = mostHappyPair[1]
 
-            mostHappyPairGroup = None # this will be a set of students
-            isStudent1Assigned = False
-            isStudent2Assigned = False
+            mostHappyPairGroup = None # set of students
+
+            student1Group = (None, None) # (groupAssignmentIndex, set of students in group)
+            student2Group = (None, None)
 
             for i in range(len(groupAssignments)):
                 if student1 in groupAssignments[i]:
-                    isStudent1Assigned = True
-                    if mostHappyPairGroup == None:
-                        mostHappyPairGroup = groupAssignments[i]
-                elif student2 in groupAssignments[i]:
-                    isStudent2Assigned = True
-                    if mostHappyPairGroup == None:
-                        mostHappyPairGroup = groupAssignments[i]
-                
-            if isStudent1Assigned and isStudent2Assigned:
-                continue
-            
-            if mostHappyPairGroup == None or len(mostHappyPairGroup) == 0:
-                groupAssignments.append(set(student1, student2))
-                mostHappyPairGroup = set(student1, student2)
-            
-            roomStress = calculate_stress_for_room(mostHappyPairGroup, G)
+                    student1Group = (i, groupAssignments[i])
+                if student2 in groupAssignments[i]:
+                    student2Group = (i, groupAssignments[i])
 
-            if roomStress <= maxGroupStress:
-                roomHappiness = calculate_happiness_for_room(mostHappyPairGroup, G)
+            if student1Group == (None, None) and student2Group == (None, None):
+            	if passesStressCheck(G, maxGroupStress, student1, student2):
+            		groupAssignments.append({student1, student2}) # make new group with student 1 and 2
+            		createdGroups += 1
 
-        if roomHappiness > bestHappiness:
-            bestAssignment = groupAssignments
-            bestHappiness = currentKHappiness
+            elif student1Group == (None, None) and student2Group != (None, None): 
+            	if passesStressCheck(G, maxGroupStress, student2Group[i], student1):
+            		groupIndex = student2Group[0]
+            		groupAssignments[groupIndex].append(student1) # add student1 to student2's group
+            		createdGroups += 1
 
-    # format they want it in 
-    return convertPairGroupToMap()
+            elif student1Group != (None, None) and student2Group == (None, None): 
+            	if passesStressCheck(G, maxGroupStress, student1Group[i], student2):
+            		groupIndex = student1Group[0]
+            		groupAssignments[groupIndex].append(student2) # add student2 to student1's group
+            		createdGroups += 1
 
+            elif student1Group != (None, None) and student2Group != (None, None):
+            	continue # student1 and student2 have already been assigned -> don't add suboptimal pairing
+
+        groupMap, numOfGroups = convertListIntoMap(groupAssignments)
+        currentAssignmentHappiness = calculate_happiness(groupMap, G)
+        if currentAssignmentHappiness > bestAssignmentHappiness:
+        	bestAssignment = groupMap
+        	bestAssignmentHappiness = currentAssignmentHappiness
+        	optimalK = numOfGroups
+
+    return bestAssignment, optimalK
 
 
 def dp_hauffman_solve(G, s):
