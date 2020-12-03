@@ -15,10 +15,15 @@ def convertListIntoMap(groupAssignments):
     	numOfGroups += 1
     return pairMap, numOfGroups
 
-def passesStressCheck(G, maxGroupStress, studentGroup, nonPairedStudent):
-	studentGroupCopy = studentGroup
-	roomStress = calculate_stress_for_room(list(studentGroupCopy.add(nonPairedStudent)), G)
-	return roomStress <= maxGroupStress
+def passesStressCheck(G, maxGroupStress, groupAssignments, studentGroup, nonPairedStudent):
+    groupIndex = studentGroup[0]
+    groupAssignments[groupIndex].add(nonPairedStudent)
+	roomStress = calculate_stress_for_room(list(groupAssignments[groupIndex]), G)
+    if roomStress <= maxGroupStress:
+        return True
+    else:
+        groupAssignments[groupIndex].remove(nonPairedStudent)
+        return False
 
 def passesStressCheck(G, maxGroupStress, student1, student2):
 	roomStress = calculate_stress_for_room([student1, student2], G)
@@ -66,15 +71,11 @@ def solve(G, s):
             		createdGroups += 1
 
             elif student1Group == (None, None) and student2Group != (None, None): 
-            	if passesStressCheck(G, maxGroupStress, student2Group[i], student1):
-            		groupIndex = student2Group[0]
-            		groupAssignments[groupIndex].append(student1) # add student1 to student2's group
-            		createdGroups += 1
+            	if passesStressCheck(G, maxGroupStress, groupAssignments, student2Group, student1): # adds student 1 to student 2 group to check stress
+                    createdGroups += 1
 
             elif student1Group != (None, None) and student2Group == (None, None): 
-            	if passesStressCheck(G, maxGroupStress, student1Group[i], student2):
-            		groupIndex = student1Group[0]
-            		groupAssignments[groupIndex].append(student2) # add student2 to student1's group
+            	if passesStressCheck(G, maxGroupStress, groupAssignments, student1Group, student2): # adds student 2 to student 1 group to check stress
             		createdGroups += 1
 
             elif student1Group != (None, None) and student2Group != (None, None):
@@ -88,6 +89,7 @@ def solve(G, s):
         	optimalK = numOfGroups
 
     return bestAssignment, optimalK
+
 
 
 def dp_hauffman_solve(G, s):
