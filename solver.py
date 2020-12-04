@@ -39,6 +39,8 @@ def solve(G, s):
         k: Number of breakout rooms
     """
     sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['happiness'], reverse = True)
+    sortedEdgesCopy = sortedEdges.copy()
+
     bestAssignment = None
     bestAssignmentHappiness = 0
     optimalK = 0
@@ -49,7 +51,7 @@ def solve(G, s):
         maxGroupStress = s / i
 
         while createdGroups <= i:
-            mostHappyPair = sortedEdges.pop(0) # format: (u, v, {happiness: 3, stress: 3})
+            mostHappyPair = sortedEdgesCopy.pop(0) # format: (u, v, {happiness: 3, stress: 3})
             
             student1 = mostHappyPair[0]
             student2 = mostHappyPair[1]
@@ -81,12 +83,15 @@ def solve(G, s):
             elif student1Group != (None, None) and student2Group != (None, None):
             	continue # student1 and student2 have already been assigned -> don't add suboptimal pairing
 
+        sortedEdgesCopy = sortedEdges.copy() # reset sorted list for next iteration of k
+
         groupMap, numOfGroups = convertListIntoMap(groupAssignments)
         currentAssignmentHappiness = calculate_happiness(groupMap, G)
         if currentAssignmentHappiness > bestAssignmentHappiness:
         	bestAssignment = groupMap
         	bestAssignmentHappiness = currentAssignmentHappiness
         	optimalK = numOfGroups
+
 
     return bestAssignment, optimalK
 
