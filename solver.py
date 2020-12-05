@@ -20,20 +20,20 @@ def addStudentToGroup(G, maxGroupStress, groupAssignments, studentGroup, nonPair
         groupAssignments[groupIndex].remove(nonPairedStudent)
 
 def addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
-	happiestGroup = (None, None) # (index in groupAssignment, happiness level with both students)
+	happiestGroup = (None, 0) # (index in groupAssignment, happiness level with both students)
 	for i in range(len(groupAssignments)):
 		groupAssignments[i].add(student1)
 		groupAssignments[i].add(student2)
 		roomStress = calculate_stress_for_room(groupAssignments[i], G)
 		if roomStress <= maxGroupStress:
-			groupHappiness = calculate_happiness(groupAssignments[i], G)
+			groupHappiness = calculate_happiness_for_room(groupAssignments[i], G)
 			happiestGroupHappiness = happiestGroup[1]
 			if groupHappiness > happiestGroupHappiness:
 				 happiestGroup = (i, groupHappiness)
 		groupAssignments[i].remove(student1)
 		groupAssignments[i].remove(student2)
 
-	if happiestGroup == (None, None):
+	if happiestGroup[0] == None:
 		roomStress = calculate_stress_for_room([student1, student2], G)
 		if roomStress <= maxGroupStress:
 			groupAssignments.append({student1, student2})
@@ -53,7 +53,7 @@ def solve(G, s):
         D: Dictionary mapping for student to breakout room r e.g. {0:2, 1:0, 2:1, 3:2}
         k: Number of breakout rooms
     """
-    sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['happiness'], reverse = True)
+    sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['happiness']/tuple[2]['stress'], reverse = True)
     sortedEdgesCopy = sortedEdges.copy()
 
     bestAssignment = None
@@ -71,14 +71,15 @@ def solve(G, s):
 
         print("Max Group Stress: " + str(maxGroupStress))
 
-        while createdGroups <= i:
+        while createdGroups <= i and len(sortedEdgesCopy) > 0:
         
             print("Group Assignments: " + str(groupAssignments))
-
+            #print("length of sortedEdges " + str(len(sortedEdgesCopy)))
             mostHappyPair = sortedEdgesCopy.pop(0) #format: (u, v, {happiness: 3, stress: 3})
 
-            print("Most Happy Pair is: " + str(mostHappyPair))
-            print("Number of created groups: " + str(createdGroups))
+            #print("Most Happy Pair is: " + str(mostHappyPair))
+            
+            #print("Number of created groups: " + str(createdGroups))
 
             student1 = mostHappyPair[0]
             student2 = mostHappyPair[1]
@@ -86,11 +87,11 @@ def solve(G, s):
             student1Group = (None, None) # (groupAssignmentIndex, set of students in group)
             student2Group = (None, None)
 
-            for i in range(len(groupAssignments)):
-                if student1 in groupAssignments[i]:
-                    student1Group = (i, groupAssignments[i])
-                if student2 in groupAssignments[i]:
-                    student2Group = (i, groupAssignments[i])
+            for a in range(len(groupAssignments)):
+                if student1 in groupAssignments[a]:
+                    student1Group = (a, groupAssignments[a])
+                if student2 in groupAssignments[a]:
+                    student2Group = (a, groupAssignments[a])
 
             if student1Group == (None, None) and student2Group == (None, None):
                 if addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
@@ -111,21 +112,24 @@ def solve(G, s):
             bestAssignment = groupMap
             bestAssignmentHappiness = currentAssignmentHappiness
             optimalK = numOfGroups
-
+    print(bestAssignment)
+    print(optimalK)
     return bestAssignment, optimalK
+
 
 # Here's an example of how to run your solver.
 
 # Usage: python3 solver.py test.in
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 2
-    path = sys.argv[1]
+    #assert len(sys.argv) == 2
+    #path = sys.argv[1]
+    path = "50.in"
     G, s = read_input_file(path)
     D, k = solve(G, s)
     assert is_valid_solution(D, G, s, k)
     print("Total Happiness: {}".format(calculate_happiness(D, G)))
-    write_output_file(D, 'outputs/10.out')
+    write_output_file(D, 'outputs/50.out')
 
 
 # For testing a folder of inputs to create a folder of outputs, you can use glob (need to import it)
