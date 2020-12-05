@@ -72,10 +72,10 @@ def solve(G, s):
         print("Max Group Stress: " + str(maxGroupStress))
 
         while createdGroups <= i:
-        	
-        	print("Group Assignments: " + str(groupAssignments))
+        
+            print("Group Assignments: " + str(groupAssignments))
 
-			mostHappyPair = sortedEdgesCopy.pop(0) #format: (u, v, {happiness: 3, stress: 3})
+            mostHappyPair = sortedEdgesCopy.pop(0) #format: (u, v, {happiness: 3, stress: 3})
 
             print("Most Happy Pair is: " + str(mostHappyPair))
             print("Number of created groups: " + str(createdGroups))
