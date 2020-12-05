@@ -12,19 +12,37 @@ def convertListIntoMap(groupAssignments):
         numOfGroups += 1
     return pairMap, numOfGroups
 
-def passesStressCheck1(G, maxGroupStress, groupAssignments, studentGroup, nonPairedStudent):
+def addStudentToGroup(G, maxGroupStress, groupAssignments, studentGroup, nonPairedStudent):
     groupIndex = studentGroup[0]
     groupAssignments[groupIndex].add(nonPairedStudent)
     roomStress = calculate_stress_for_room(list(groupAssignments[groupIndex]), G)
-    if roomStress <= maxGroupStress:
-        return True
-    else:
+    if roomStress > maxGroupStress:
         groupAssignments[groupIndex].remove(nonPairedStudent)
-        return False
-        
-def passesStressCheck2(G, maxGroupStress, student1, student2):
-    roomStress = calculate_stress_for_room([student1, student2], G)
-    return roomStress <= maxGroupStress
+
+def addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
+	happiestGroup = (None, None) # (index in groupAssignment, happiness level with both students)
+	for i in range(len(groupAssignments)):
+		groupAssignments[i].add(student1)
+		groupAssignments[i].add(student2)
+		roomStress = calculate_stress_for_room(groupAssignments[i], G)
+		if roomStress <= maxGroupStress:
+			groupHappiness = calculate_happiness(groupAssignments[i], G)
+			happiestGroupHappiness = happiestGroup[1]
+			if groupHappiness > happiestGroupHappiness:
+				 happiestGroup = (i, groupHappiness)
+		groupAssignments[i].remove(student1)
+		groupAssignments[i].remove(student2)
+
+	if happiestGroup == (None, None):
+		roomStress = calculate_stress_for_room([student1, student2], G)
+		if roomStress <= maxGroupStress:
+			groupAssignments.append({student1, student2})
+			return True
+	else:
+		happiestGroupIndex = happiestGroup[0]
+		groupAssignments[happiestGroupIndex].add(student1)
+		groupAssignments[happiestGroupIndex].add(student2)	
+	return False
 
 def solve(G, s):
     """
@@ -43,18 +61,25 @@ def solve(G, s):
     optimalK = 0
 
     for i in range(1, len(G) + 1):
+
         groupAssignments = [] # list of student sets
+
+        print("K: " + str(i))
+
         createdGroups = 0
         maxGroupStress = s / i
 
-        print("Max Group Stress is: " + str(maxGroupStress))
+        print("Max Group Stress: " + str(maxGroupStress))
 
         while createdGroups <= i:
-            print("Current K: " + str(i))
-            mostHappyPair = sortedEdgesCopy.pop(0) # format: (u, v, {happiness: 3, stress: 3})
+        	
+        	print("Group Assignments: " + str(groupAssignments))
+
+			mostHappyPair = sortedEdgesCopy.pop(0) #format: (u, v, {happiness: 3, stress: 3})
 
             print("Most Happy Pair is: " + str(mostHappyPair))
-            print("Length of copy array: " + str(len(sortedEdgesCopy)))
+            print("Number of created groups: " + str(createdGroups))
+
             student1 = mostHappyPair[0]
             student2 = mostHappyPair[1]
 
@@ -67,27 +92,16 @@ def solve(G, s):
                 if student2 in groupAssignments[i]:
                     student2Group = (i, groupAssignments[i])
 
-            print("Student 1 Group is: " + str(student1Group) + " and Student 2 Group is " + str(student2Group))
-
             if student1Group == (None, None) and student2Group == (None, None):
-                if passesStressCheck2(G, maxGroupStress, student1, student2):
-                    groupAssignments.append({student1, student2}) # make new group with student 1 and 2
+                if addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
                     createdGroups += 1
 
             elif student1Group == (None, None) and student2Group != (None, None): 
-                if passesStressCheck1(G, maxGroupStress, groupAssignments, student2Group, student1): # adds student 1 to student 2 group to check stress
-                    pass
+                addStudentToGroup(G, maxGroupStress, groupAssignments, student2Group, student1) # adds student 1 to student 2 group to check stress
 
             elif student1Group != (None, None) and student2Group == (None, None): 
-                if passesStressCheck1(G, maxGroupStress, groupAssignments, student1Group, student2): # adds student 2 to student 1 group to check stress
-                    pass
-
-            elif student1Group != (None, None) and student2Group != (None, None):
-                pass # student1 and student2 have already been assigned -> don't add suboptimal pairing
-            
-            print("Number of created groups: " + str(createdGroups))
-            print("Sorted Edges Copy next element is " + str(sortedEdgesCopy[0]))
-        
+                addStudentToGroup(G, maxGroupStress, groupAssignments, student1Group, student2) # adds student 2 to student 1 group to check stress
+           
         createdGroups = 0 
         sortedEdgesCopy = sortedEdges.copy() # reset sorted list for next iteration of k
 
@@ -97,8 +111,6 @@ def solve(G, s):
             bestAssignment = groupMap
             bestAssignmentHappiness = currentAssignmentHappiness
             optimalK = numOfGroups
-        
-        print("Group Assignments: " + str(groupAssignments))
 
     return bestAssignment, optimalK
 
