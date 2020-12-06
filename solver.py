@@ -2,6 +2,8 @@ import networkx as nx
 from parse import read_input_file, write_output_file
 from utils import is_valid_solution, calculate_happiness, convert_dictionary, calculate_stress_for_room, calculate_happiness_for_room
 import sys
+import glob
+import os
 
 def convertListIntoMap(groupAssignments):
     pairMap = {}
@@ -20,20 +22,20 @@ def addStudentToGroup(G, maxGroupStress, groupAssignments, studentGroup, nonPair
         groupAssignments[groupIndex].remove(nonPairedStudent)
 
 def addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
-	happiestGroup = (None, None) # (index in groupAssignment, happiness level with both students)
+	happiestGroup = (None, 0) # (index in groupAssignment, happiness level with both students)
 	for i in range(len(groupAssignments)):
 		groupAssignments[i].add(student1)
 		groupAssignments[i].add(student2)
 		roomStress = calculate_stress_for_room(groupAssignments[i], G)
 		if roomStress <= maxGroupStress:
-			groupHappiness = calculate_happiness(groupAssignments[i], G)
+			groupHappiness = calculate_happiness_for_room(groupAssignments[i], G)
 			happiestGroupHappiness = happiestGroup[1]
 			if groupHappiness > happiestGroupHappiness:
 				 happiestGroup = (i, groupHappiness)
 		groupAssignments[i].remove(student1)
 		groupAssignments[i].remove(student2)
 
-	if happiestGroup == (None, None):
+	if happiestGroup[0] == None:
 		roomStress = calculate_stress_for_room([student1, student2], G)
 		if roomStress <= maxGroupStress:
 			groupAssignments.append({student1, student2})
@@ -86,11 +88,11 @@ def solve(G, s):
             student1Group = (None, None) # (groupAssignmentIndex, set of students in group)
             student2Group = (None, None)
 
-            for i in range(len(groupAssignments)):
-                if student1 in groupAssignments[i]:
-                    student1Group = (i, groupAssignments[i])
-                if student2 in groupAssignments[i]:
-                    student2Group = (i, groupAssignments[i])
+            for a in range(len(groupAssignments)):
+                if student1 in groupAssignments[a]:
+                    student1Group = (a, groupAssignments[a])
+                if student2 in groupAssignments[a]:
+                    student2Group = (a, groupAssignments[a])
 
             if student1Group == (None, None) and student2Group == (None, None):
                 if addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
