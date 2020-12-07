@@ -4,6 +4,7 @@ from utils import is_valid_solution, calculate_happiness, convert_dictionary, ca
 import sys
 import glob
 import os
+import heapq 
 
 def convertListIntoMap(groupAssignments):
     pairMap = {}
@@ -45,6 +46,62 @@ def addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
         groupAssignments[happiestGroupIndex].add(student2)	
     return False
 
+def packRestOfStudents(G, groupAssignments, numberOfStudents, numOfCreatedGroups, maxGroupStress, sortedEdges):
+
+	sortedByIncreasingStress = sorted(sortedEdges, key = lambda tuple: tuple[2]['stress'])
+
+	# add new code logic here !!!
+	# smallestStressPair = pop(0)
+	# track whether we see either one
+	# until all students have been assigned
+	## if one is assigned, and other isn't, add to group
+	## if both are assigned, pass to next iteration 
+	## if none are assigned, pass to next iteration 
+
+	stressMappings = {}
+	roomStressList = []
+	for i in range(len(groupAssignments)):
+		roomStress = calculate_stress_for_room(list(groupAssignments[i]), G)
+		stressMappings[roomStress] = i
+		roomStressList.append(roomStress)
+
+	heapq.heapify(roomStressList)
+
+	studentsInGroups = set()
+	for i in range(len(groupAssignments)):
+		for student in groupAssignments[i]:
+			studentsInGroups.add(student)
+
+	for student in range(numberOfStudents):
+		if student in studentsInGroups:
+			continue
+		else:
+			isStudentAssigned = False
+			while not isStudentAssigned:
+				if len(roomStressList) == 0:
+					return None
+
+				leastStressValue = heapq.heappop(roomStressList)
+				roomToFillIndex = stressMappings[leastStressValue]
+				groupAssignments[roomToFillIndex].add(student)
+				roomStressWithStudent = calculate_stress_for_room(list(groupAssignments[roomToFillIndex]), G)
+
+				if roomStressWithStudent > maxGroupStress:
+					groupAssignments[roomToFillIndex].remove(student)
+				else:
+					isStudentAssigned = True
+					stressMappings[roomStressWithStudent] = i
+					heapq.heappush(roomStressList, roomStressWithStudent)
+					print("SAVED STUDENT FROM NO GROUP!")
+	return groupAssignments
+
+def getDefaultAssignment(numOfStudents):
+	getDefaultAssignment = {}
+	for i in range(numOfStudents):
+		getDefaultAssignment[i] = i
+	return getDefaultAssignment
+	
+
 def solve(G, s):
     """
     Args:
@@ -60,27 +117,19 @@ def solve(G, s):
     bestAssignment = None
     bestAssignmentHappiness = 0
     optimalK = 0
+    numberOfStudents = len(G)
 
-    for i in range(1, len(G) + 1):
+    for i in range(1, numberOfStudents + 1):
 
         groupAssignments = [] # list of student sets
+        numberOfAssignedStudents = 0
 
-        #print("K: " + str(i))
-
-        createdGroups = 0
+        numOfCreatedGroups = 0
         maxGroupStress = s / i
 
-        #print("Max Group Stress: " + str(maxGroupStress))
+        while numOfCreatedGroups <= i and len(sortedEdgesCopy) > 0:
 
-        while createdGroups <= i and len(sortedEdgesCopy) > 0:
-        
-            #print("Group Assignments: " + str(groupAssignments))
-            #print("length of sortedEdges " + str(len(sortedEdgesCopy)))
-            mostHappyPair = sortedEdgesCopy.pop(0) #format: (u, v, {happiness: 3, stress: 3})
-
-            #print("Most Happy Pair is: " + str(mostHappyPair))
-            
-            #print("Number of created groups: " + str(createdGroups))
+            mostHappyPair = sortedEdgesCopy.pop(0) # format: (u, v, {happiness: 3, stress: 3})
 
             student1 = mostHappyPair[0]
             student2 = mostHappyPair[1]
@@ -95,26 +144,36 @@ def solve(G, s):
                     student2Group = (a, groupAssignments[a])
 
             if student1Group == (None, None) and student2Group == (None, None):
-                if createdGroups < i and addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
-                    createdGroups += 1
+                if numOfCreatedGroups < i and addedNewGroup(student1, student2, G, groupAssignments, maxGroupStress):
+                    numOfCreatedGroups += 1
 
             elif student1Group == (None, None) and student2Group != (None, None): 
                 addStudentToGroup(G, maxGroupStress, groupAssignments, student2Group, student1) # adds student 1 to student 2 group to check stress
 
             elif student1Group != (None, None) and student2Group == (None, None): 
                 addStudentToGroup(G, maxGroupStress, groupAssignments, student1Group, student2) # adds student 2 to student 1 group to check stress
-           
-        createdGroups = 0 
-        sortedEdgesCopy = sortedEdges.copy() # reset sorted list for next iteration of k
+
+        # groupAssignments = packRestOfStudents(G, groupAssignments, numberOfStudents, numOfCreatedGroups, maxGroupStress, sortedEdges)
+        if groupAssignments == None:
+        	continue
+
+        sortedEdgesCopy = sortedEdges.copy()
 
         groupMap, numOfGroups = convertListIntoMap(groupAssignments)
         currentAssignmentHappiness = calculate_happiness(groupMap, G)
-        if currentAssignmentHappiness > bestAssignmentHappiness and len(groupMap) == len(G):
+        if currentAssignmentHappiness > bestAssignmentHappiness:
             bestAssignment = groupMap
             bestAssignmentHappiness = currentAssignmentHappiness
             optimalK = numOfGroups
-    print(bestAssignment)
-    print(optimalK)
+
+    if bestAssignment == None:
+        defaultAssignment = getDefaultAssignment(numberOfStudents)
+        print("Best Assignment: " + str(defaultAssignment))
+        print("Optimal K: " + str(numberOfStudents))
+        return defaultAssignment, numberOfStudents
+        
+    print("Best Assignment: " + str(bestAssignment))
+    print("Optimal K: " + str(optimalK))
     return bestAssignment, optimalK
 
 
@@ -125,12 +184,12 @@ def solve(G, s):
 # if __name__ == '__main__':
 #     #assert len(sys.argv) == 2
 #     #path = sys.argv[1]
-#     path = "inputs/small-234.in"
+#     path = "inputs/small-236.in"
 #     G, s = read_input_file(path)
 #     D, k = solve(G, s)
 #     assert is_valid_solution(D, G, s, k)
 #     print("Total Happiness: {}".format(calculate_happiness(D, G)))
-#     write_output_file(D, 'small-234.out')
+#     write_output_file(D, 'small-236.out')
 
 
 # For testing a folder of inputs to create a folder of outputs, you can use glob (need to import it)
@@ -142,5 +201,5 @@ if __name__ == '__main__':
         G, s = read_input_file(input_path)
         D, k = solve(G, s)
         assert is_valid_solution(D, G, s, k)
-        happiness = calculate_happiness(D, G)
+        print("Total Happiness: {}".format(calculate_happiness(D, G)))
         write_output_file(D, output_path)

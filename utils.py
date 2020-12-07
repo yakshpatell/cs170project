@@ -8,7 +8,6 @@ def is_valid_solution(D, G, s, rooms):
         G: networkx.Graph
         s: Stress budget
         rooms: Number of breakout rooms
-
     Returns:
         bool: whether D is a valid solution
     """
@@ -32,7 +31,6 @@ def calculate_happiness(D, G):
         G: networkx.Graph
         s: Stress budget
         k: Number of breakout rooms
-
     Returns:
         float: total happiness
     """
