@@ -72,6 +72,34 @@ def addStudentsToExisitingGroups(student1, student2, G, groupAssignments, maxGro
     groupAssignments[leastStressedGroup[0]].add(student2)	
     return True
 
+def merge(s1, s2, G):
+    # merge s1 and s2 in G and output the merged graph
+    s1_edges = G[s1]
+    s2_edges = G[s2]
+
+    G.remove_node(s1)
+    G.remove_node(s2)
+    G.add_node((s1, s2))
+
+    #print(s2_edges)
+    #print(s1_edges)
+
+    for other_stud in s1_edges:
+
+        if other_stud == s1 or other_stud == s2:
+            continue
+
+        #print(other_stud)
+
+        s2_e = s2_edges[other_stud]
+        s1_e = s2_edges[other_stud]
+
+        new_stress = s1_e['stress'] + s2_e['stress'] + s1_edges[s2]['stress']
+        new_happiness = s1_e['happiness'] + s2_e['happiness'] + s1_edges[s2]['happiness']
+        G.add_edge((s1, s2), other_stud, stress=new_stress, happiness=new_happiness )
+
+    return G 
+
 def solve(G, s):
     sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['happiness'], reverse = True)
     # sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['stress'], reverse = True)
@@ -87,7 +115,7 @@ def solve(G, s):
         createdGroups = 0
         maxGroupStress = s / i
         areGroupsMaxed = False
-        while assigned < len(G) and len(sortedEdgesCopy) > 0:
+        while assigned < len(G) and len(sortedEdgesCopy) > 0 and (G is not None):
             mostHappyPair = sortedEdgesCopy.pop(0) # format: (u, v, {happiness: 3, stress: 3})
             if createdGroups == i:
                 areGroupsMaxed = True
@@ -106,15 +134,29 @@ def solve(G, s):
                     groupAssignments.append({student1, student2})
                     createdGroups += 1
                     assigned += 2
+                    G = merge(student1, student2, G)
+
             elif student1Group == (None, None) and student2Group == (None, None) and areGroupsMaxed == True:
                 if addStudentsToExisitingGroups(student1, student2, G, groupAssignments, maxGroupStress):
                     assigned += 2
+                    G = merge(student1, student2, G)
+
             elif student1Group == (None, None) and student2Group != (None, None) and areGroupsMaxed == True: 
                 if addStudentToGroup(G, maxGroupStress, groupAssignments, student2Group, student1): # adds student 1 to student 2 group to check stress
                     assigned += 1
+                    G = G.remove_node(student2)
+
             elif student1Group != (None, None) and student2Group == (None, None) and areGroupsMaxed == True: 
                 if addStudentToGroup(G, maxGroupStress, groupAssignments, student1Group, student2): # adds student 2 to student 1 group to check stress
                     assigned += 1
+                    G = G.remove_node(student1)
+
+            if G is None:
+                break
+            #resort according to merged node or removing a node to choose from:
+            sortedEdges = sorted(G.edges(data=True), key = lambda tuple: tuple[2]['happiness'], reverse = True)
+
+        print(bestAssignmentHappiness)
         createdGroups = 0 
         sortedEdgesCopy = sortedEdges.copy() # reset sorted list for next iteration of k
         sortedEdgesCopy = sortedEdgesCopy*3
@@ -188,7 +230,7 @@ if __name__ == '__main__':
 
 #For testing a folder of inputs to create a folder of outputs, you can use glob (need to import it)
 if __name__ == '__main__':
-    inputs = glob.glob('inputs/*')
+    inputs = glob.glob('inputs/large-203.in')
     for input_path in inputs:
         print(input_path)
         output_path = 'class_outputs/' + os.path.basename(input_path)[:-3] + '.out'
