@@ -1,22 +1,7 @@
-# CS 170 Project Fall 2020
+## Student Pairing Algorithm
 
-Take a look at the project spec before you get started!
+Objective: Given a list of student pairings of happiness and stress levels, how do you effeciently maximize happiness across all groups without any group exceeding a given StressMax / # of Created Groups.
 
-Requirements:
+In other words, F(StressMax, StudentHapAndStressJSON] = Number of groups and which students in each group.
 
-Python 3.6+
-
-You'll only need to install networkx to work with the starter code. For installation instructions, follow: https://networkx.github.io/documentation/stable/install.html
-
-If using pip to download, run `python3 -m pip install networkx`
-
-
-Files:
-- `parse.py`: functions to read/write inputs and outputs
-- `solver.py`: where you should be writing your code to solve inputs
-- `utils.py`: contains functions to compute cost and validate NetworkX graphs
-
-When writing inputs/outputs:
-- Make sure you use the functions `write_input_file` and `write_output_file` provided
-- Run the functions `read_input_file` and `read_output_file` to validate your files before submitting!
-  - These are the functions run by the autograder to validate submissions
+We created an effecient solution that utilizes dynamic programming and greedy algorithms. Check it out! 
